@@ -119,6 +119,14 @@ export interface ChannelOtherSettings {
   monitor_last_test_time?: number
   monitor_consecutive_failures?: number
   monitor_consecutive_successes?: number
+  // Codex Auto-Reset
+  codex_auto_reset_enabled?: boolean
+  codex_auto_reset_5h?: boolean
+  codex_auto_reset_7d?: boolean
+  codex_auto_reset_threshold?: number
+  codex_consumer_resets_5h?: number
+  codex_consumer_resets_7d?: number
+  codex_consumer_resets_synced_at?: number
 }
 
 // ============================================================================

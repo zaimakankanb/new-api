@@ -729,6 +729,11 @@ type ChannelTag struct {
 	Groups           *string `json:"groups"`
 	ParamOverride    *string `json:"param_override"`
 	HeaderOverride   *string `json:"header_override"`
+	// Codex Auto-Reset batch settings
+	CodexAutoResetEnabled   *string `json:"codex_auto_reset_enabled"`
+	CodexAutoReset5h        *string `json:"codex_auto_reset_5h"`
+	CodexAutoReset7d        *string `json:"codex_auto_reset_7d"`
+	CodexAutoResetThreshold *string `json:"codex_auto_reset_threshold"`
 }
 
 func DisableTagChannels(c *gin.Context) {
@@ -827,6 +832,47 @@ func EditTagChannels(c *gin.Context) {
 	if err != nil {
 		common.ApiError(c, err)
 		return
+	}
+	// 批量更新 Codex Auto-Reset 设置（仅影响 Codex 类型渠道）
+	if channelTag.CodexAutoResetEnabled != nil || channelTag.CodexAutoReset5h != nil || channelTag.CodexAutoReset7d != nil || channelTag.CodexAutoResetThreshold != nil {
+		tagName := channelTag.Tag
+		if channelTag.NewTag != nil && *channelTag.NewTag != "" {
+			tagName = *channelTag.NewTag
+		}
+		var channels []model.Channel
+		findErr := model.DB.Where("tag = ? AND type = ?", tagName, constant.ChannelTypeCodex).Find(&channels).Error
+		if findErr == nil {
+			for i := range channels {
+				ch := &channels[i]
+				otherSettings := ch.GetOtherSettings()
+				changed := false
+				if channelTag.CodexAutoResetEnabled != nil {
+					otherSettings.CodexAutoResetEnabled = *channelTag.CodexAutoResetEnabled == "true"
+					changed = true
+				}
+				if channelTag.CodexAutoReset5h != nil {
+					otherSettings.CodexAutoReset5h = *channelTag.CodexAutoReset5h == "true"
+					changed = true
+				}
+				if channelTag.CodexAutoReset7d != nil {
+					otherSettings.CodexAutoReset7d = *channelTag.CodexAutoReset7d == "true"
+					changed = true
+				}
+				if channelTag.CodexAutoResetThreshold != nil {
+					if v, convErr := strconv.ParseFloat(*channelTag.CodexAutoResetThreshold, 64); convErr == nil && v > 0 {
+						otherSettings.CodexAutoResetThreshold = v
+						changed = true
+					}
+				}
+				if changed {
+					settingsBytes, marshalErr := common.Marshal(otherSettings)
+					if marshalErr == nil {
+						_ = model.DB.Model(&model.Channel{}).Where("id = ?", ch.Id).
+							Update("other_settings", string(settingsBytes)).Error
+					}
+				}
+			}
+		}
 	}
 	model.InitChannelCache()
 	c.JSON(http.StatusOK, gin.H{

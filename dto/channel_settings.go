@@ -54,6 +54,15 @@ type ChannelOtherSettings struct {
 	MonitorLastTestTime                   int64         `json:"monitor_last_test_time,omitempty"`                     // 上次自动监控测试时间
 	MonitorConsecutiveFailures            int           `json:"monitor_consecutive_failures,omitempty"`               // 连续失败次数
 	MonitorConsecutiveSuccesses           int           `json:"monitor_consecutive_successes,omitempty"`              // 连续成功次数
+	// Codex Auto-Reset Settings（自动重置配置）
+	CodexAutoResetEnabled     bool    `json:"codex_auto_reset_enabled,omitempty"`      // 总开关：是否启用自动消耗重置
+	CodexAutoReset5h          bool    `json:"codex_auto_reset_5h,omitempty"`           // 是否自动重置 5h 窗口
+	CodexAutoReset7d          bool    `json:"codex_auto_reset_7d,omitempty"`           // 是否自动重置 7d 窗口
+	CodexAutoResetThreshold   float64 `json:"codex_auto_reset_threshold,omitempty"`    // 触发阈值 (0-100%)，0 表示使用默认值 80
+	// Codex Consumer Resets（从上游同步的重置次数）
+	CodexConsumerResets5h       int   `json:"codex_consumer_resets_5h,omitempty"`       // 5h 窗口可用重置次数
+	CodexConsumerResets7d       int   `json:"codex_consumer_resets_7d,omitempty"`       // 7d 窗口可用重置次数
+	CodexConsumerResetsSyncedAt int64 `json:"codex_consumer_resets_synced_at,omitempty"` // 上次同步时间戳（Unix 秒）
 }
 
 func (s *ChannelOtherSettings) IsOpenRouterEnterprise() bool {

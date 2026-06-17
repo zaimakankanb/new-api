@@ -231,7 +231,8 @@ function hasAdvancedSettingsValues(values: ChannelFormValues): boolean {
     values.monitor_auto_disable_enabled !== 'inherit' ||
     values.monitor_auto_enable_enabled !== 'inherit' ||
     values.monitor_disable_threshold?.trim() ||
-    values.monitor_enable_threshold?.trim()
+    values.monitor_enable_threshold?.trim() ||
+    values.codex_auto_reset_enabled
   )
 }
 
@@ -3154,6 +3155,117 @@ export function ChannelMutateDrawer({
                         </div>
                       </div>
                     </div>
+
+                    {/* ── Codex Auto Reset ── */}
+                    {currentType === 57 && (
+                      <div className={sideDrawerSectionClassName()}>
+                        <div className='flex flex-col gap-4 border-t pt-4'>
+                          <SubHeading
+                            title={t('Codex Auto Reset')}
+                            icon={<RefreshCw className='h-3.5 w-3.5' />}
+                          />
+                          <div className='divide-border space-y-0 divide-y border-y'>
+                            <FormField
+                              control={form.control}
+                              name='codex_auto_reset_enabled'
+                              render={({ field }) => (
+                                <FormItem className='flex items-center justify-between gap-3 px-4 py-3'>
+                                  <div className='space-y-0.5'>
+                                    <FormLabel className='text-sm'>
+                                      {t('Auto Reset Enabled')}
+                                    </FormLabel>
+                                    <FormDescription>
+                                      {t('Auto reset when usage reaches threshold')}
+                                    </FormDescription>
+                                  </div>
+                                  <FormControl>
+                                    <Switch
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name='codex_auto_reset_5h'
+                              render={({ field }) => (
+                                <FormItem className='flex items-center justify-between gap-3 px-4 py-3'>
+                                  <div className='space-y-0.5'>
+                                    <FormLabel className='text-sm'>
+                                      {t('Reset 5h Window')}
+                                    </FormLabel>
+                                    <FormDescription>
+                                      {t('Auto consume reset for 5-hour window')}
+                                    </FormDescription>
+                                  </div>
+                                  <FormControl>
+                                    <Switch
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                      disabled={!form.watch('codex_auto_reset_enabled')}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name='codex_auto_reset_7d'
+                              render={({ field }) => (
+                                <FormItem className='flex items-center justify-between gap-3 px-4 py-3'>
+                                  <div className='space-y-0.5'>
+                                    <FormLabel className='text-sm'>
+                                      {t('Reset 7d Window')}
+                                    </FormLabel>
+                                    <FormDescription>
+                                      {t('Auto consume reset for 7-day window')}
+                                    </FormDescription>
+                                  </div>
+                                  <FormControl>
+                                    <Switch
+                                      checked={field.value}
+                                      onCheckedChange={field.onChange}
+                                      disabled={!form.watch('codex_auto_reset_enabled')}
+                                    />
+                                  </FormControl>
+                                </FormItem>
+                              )}
+                            />
+                          </div>
+
+                          <FormField
+                            control={form.control}
+                            name='codex_auto_reset_threshold'
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>
+                                  {t('Reset Threshold (%)')}
+                                </FormLabel>
+                                <FormControl>
+                                  <Input
+                                    type='number'
+                                    min={1}
+                                    max={100}
+                                    step={1}
+                                    placeholder='80'
+                                    disabled={!form.watch('codex_auto_reset_enabled')}
+                                    {...field}
+                                  />
+                                </FormControl>
+                                <FormDescription>
+                                  {t('Trigger auto reset when usage exceeds this percentage (default 80%)')}
+                                </FormDescription>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     {/* ── Extra Settings ── */}
                     <div className={sideDrawerSectionClassName()}>

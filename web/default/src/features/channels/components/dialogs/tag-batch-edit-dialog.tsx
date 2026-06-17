@@ -34,6 +34,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { MultiSelect } from '@/components/multi-select'
 import {
@@ -67,6 +68,12 @@ export function TagBatchEditDialog({
   const [models, setModels] = useState('')
   const [modelMapping, setModelMapping] = useState('')
   const [groups, setGroups] = useState<string[]>([])
+  // Codex Auto-Reset batch settings
+  const [codexAutoResetEnabled, setCodexAutoResetEnabled] = useState<boolean | undefined>(undefined)
+  const [codexAutoReset5h, setCodexAutoReset5h] = useState<boolean | undefined>(undefined)
+  const [codexAutoReset7d, setCodexAutoReset7d] = useState<boolean | undefined>(undefined)
+  const [codexAutoResetThreshold, setCodexAutoResetThreshold] = useState('')
+  const [showCodexAutoReset, setShowCodexAutoReset] = useState(false)
 
   // Fetch available groups
   const { data: groupsData, isLoading: isLoadingGroups } = useQuery({
@@ -154,6 +161,20 @@ export function TagBatchEditDialog({
         params.groups = groups.join(',')
       }
 
+      // Codex Auto-Reset settings
+      if (codexAutoResetEnabled !== undefined) {
+        params.codex_auto_reset_enabled = codexAutoResetEnabled ? 'true' : 'false'
+      }
+      if (codexAutoReset5h !== undefined) {
+        params.codex_auto_reset_5h = codexAutoReset5h ? 'true' : 'false'
+      }
+      if (codexAutoReset7d !== undefined) {
+        params.codex_auto_reset_7d = codexAutoReset7d ? 'true' : 'false'
+      }
+      if (codexAutoResetThreshold.trim()) {
+        params.codex_auto_reset_threshold = codexAutoResetThreshold
+      }
+
       // Check if there are any changes
       if (Object.keys(params).length === 1) {
         toast.warning(t('No changes made'))
@@ -184,6 +205,11 @@ export function TagBatchEditDialog({
     setModels('')
     setModelMapping('')
     setGroups([])
+    setCodexAutoResetEnabled(undefined)
+    setCodexAutoReset5h(undefined)
+    setCodexAutoReset7d(undefined)
+    setCodexAutoResetThreshold('')
+    setShowCodexAutoReset(false)
     onOpenChange(false)
   }
 
@@ -280,6 +306,60 @@ export function TagBatchEditDialog({
                 <p className='text-muted-foreground text-xs'>
                   {t('User groups that can access channels with this tag')}
                 </p>
+              </div>
+
+              {/* Codex Auto Reset */}
+              <div className='space-y-3 border-t pt-4'>
+                <div className='flex items-center justify-between'>
+                  <Label>{t('Codex Auto Reset')}</Label>
+                  <Switch
+                    checked={showCodexAutoReset}
+                    onCheckedChange={setShowCodexAutoReset}
+                  />
+                </div>
+                {showCodexAutoReset && (
+                  <div className='space-y-3 rounded-md border p-3'>
+                    <p className='text-muted-foreground text-xs'>
+                      {t('These settings only apply to Codex channels (type 57)')}
+                    </p>
+                    <div className='flex items-center justify-between'>
+                      <Label className='text-sm'>{t('Auto Reset Enabled')}</Label>
+                      <Switch
+                        checked={codexAutoResetEnabled ?? false}
+                        onCheckedChange={(v) => setCodexAutoResetEnabled(v)}
+                        disabled={isSaving}
+                      />
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <Label className='text-sm'>{t('Reset 5h Window')}</Label>
+                      <Switch
+                        checked={codexAutoReset5h ?? false}
+                        onCheckedChange={(v) => setCodexAutoReset5h(v)}
+                        disabled={isSaving || !codexAutoResetEnabled}
+                      />
+                    </div>
+                    <div className='flex items-center justify-between'>
+                      <Label className='text-sm'>{t('Reset 7d Window')}</Label>
+                      <Switch
+                        checked={codexAutoReset7d ?? false}
+                        onCheckedChange={(v) => setCodexAutoReset7d(v)}
+                        disabled={isSaving || !codexAutoResetEnabled}
+                      />
+                    </div>
+                    <div className='space-y-1'>
+                      <Label className='text-sm'>{t('Reset Threshold (%)')}</Label>
+                      <Input
+                        type='number'
+                        min={1}
+                        max={100}
+                        placeholder='80'
+                        value={codexAutoResetThreshold}
+                        onChange={(e) => setCodexAutoResetThreshold(e.target.value)}
+                        disabled={isSaving || !codexAutoResetEnabled}
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

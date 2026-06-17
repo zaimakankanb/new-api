@@ -243,6 +243,12 @@ export const channelFormSchema = z
       .string()
       .optional()
       .refine(isOptionalPositiveInteger, 'Value must be a positive integer'),
+    // Codex Auto-Reset settings (stored in other_settings JSON)
+    codex_auto_reset_enabled: z.boolean().optional(),
+    codex_auto_reset_5h: z.boolean().optional(),
+    codex_auto_reset_7d: z.boolean().optional(),
+    codex_auto_reset_threshold: z.string().optional()
+      .refine(isOptionalPositiveNumber, 'Value must be greater than 0'),
   })
   .superRefine((data, ctx) => {
     if ([3, 8, 36, 45].includes(data.type) && !data.base_url?.trim()) {
@@ -371,6 +377,11 @@ export const CHANNEL_FORM_DEFAULT_VALUES: ChannelFormValues = {
   monitor_auto_enable_enabled: 'inherit',
   monitor_disable_threshold: '',
   monitor_enable_threshold: '',
+  // Codex Auto-Reset
+  codex_auto_reset_enabled: false,
+  codex_auto_reset_5h: false,
+  codex_auto_reset_7d: false,
+  codex_auto_reset_threshold: '',
 }
 
 // ============================================================================
@@ -435,6 +446,11 @@ export function transformChannelToFormDefaults(
   let monitorAutoEnableEnabled: 'inherit' | 'enabled' | 'disabled' = 'inherit'
   let monitorDisableThreshold = ''
   let monitorEnableThreshold = ''
+  // Codex Auto-Reset
+  let codexAutoResetEnabled = false
+  let codexAutoReset5h = false
+  let codexAutoReset7d = false
+  let codexAutoResetThreshold = ''
 
   if (channel.settings) {
     try {
@@ -501,6 +517,14 @@ export function transformChannelToFormDefaults(
         typeof parsed.monitor_enable_threshold === 'number'
           ? String(parsed.monitor_enable_threshold)
           : ''
+      // Codex Auto-Reset
+      codexAutoResetEnabled = parsed.codex_auto_reset_enabled === true
+      codexAutoReset5h = parsed.codex_auto_reset_5h === true
+      codexAutoReset7d = parsed.codex_auto_reset_7d === true
+      codexAutoResetThreshold =
+        typeof parsed.codex_auto_reset_threshold === 'number' && parsed.codex_auto_reset_threshold > 0
+          ? String(parsed.codex_auto_reset_threshold)
+          : ''
     } catch (error) {
       // eslint-disable-next-line no-console
       console.error('Failed to parse channel settings:', error)
@@ -562,6 +586,11 @@ export function transformChannelToFormDefaults(
     monitor_auto_enable_enabled: monitorAutoEnableEnabled,
     monitor_disable_threshold: monitorDisableThreshold,
     monitor_enable_threshold: monitorEnableThreshold,
+    // Codex Auto-Reset
+    codex_auto_reset_enabled: codexAutoResetEnabled,
+    codex_auto_reset_5h: codexAutoReset5h,
+    codex_auto_reset_7d: codexAutoReset7d,
+    codex_auto_reset_threshold: codexAutoResetThreshold,
   }
 }
 
@@ -731,6 +760,28 @@ function buildSettingsJSON(formData: ChannelFormValues): string {
     settingsObj,
     'monitor_enable_threshold',
     formData.monitor_enable_threshold
+  )
+
+  // Codex Auto-Reset settings
+  if (formData.codex_auto_reset_enabled) {
+    settingsObj['codex_auto_reset_enabled'] = true
+  } else {
+    delete settingsObj['codex_auto_reset_enabled']
+  }
+  if (formData.codex_auto_reset_5h) {
+    settingsObj['codex_auto_reset_5h'] = true
+  } else {
+    delete settingsObj['codex_auto_reset_5h']
+  }
+  if (formData.codex_auto_reset_7d) {
+    settingsObj['codex_auto_reset_7d'] = true
+  } else {
+    delete settingsObj['codex_auto_reset_7d']
+  }
+  setOptionalNumber(
+    settingsObj,
+    'codex_auto_reset_threshold',
+    formData.codex_auto_reset_threshold
   )
 
   return JSON.stringify(settingsObj)

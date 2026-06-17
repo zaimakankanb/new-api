@@ -327,6 +327,28 @@ export async function getCodexUsage(
   return res.data
 }
 
+export async function getCodexConsumerResets(
+  channelId: number
+): Promise<{ success: boolean; message?: string; data?: Record<string, unknown> }> {
+  const res = await api.get(
+    `/api/channel/${channelId}/codex/consumer-resets`,
+    channelActionConfig({ disableDuplicate: true })
+  )
+  return res.data
+}
+
+export async function consumeCodexReset(
+  channelId: number,
+  window: '5h' | '7d'
+): Promise<{ success: boolean; message?: string; upstream_status?: number; data?: Record<string, unknown> }> {
+  const res = await api.post(
+    `/api/channel/${channelId}/codex/consumer-resets/consume`,
+    { window },
+    channelActionConfig()
+  )
+  return res.data
+}
+
 // ============================================================================
 // Multi-Key Management
 // ============================================================================

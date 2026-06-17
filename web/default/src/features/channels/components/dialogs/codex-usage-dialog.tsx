@@ -26,8 +26,10 @@ import {
   User,
   Mail,
   Hash,
+  RotateCcw,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { toast } from 'sonner'
 import dayjs from '@/lib/dayjs'
 import { useCopyToClipboard } from '@/hooks/use-copy-to-clipboard'
 import { Button } from '@/components/ui/button'
@@ -42,6 +44,7 @@ import {
 import { Progress } from '@/components/ui/progress'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { StatusBadge, type StatusBadgeProps } from '@/components/status-badge'
+import { consumeCodexReset } from '../../api'
 
 type CodexRateLimitWindow = {
   used_percent?: number
@@ -74,6 +77,10 @@ type CodexUsagePayload = {
   account_id?: string
   rate_limit?: CodexRateLimit
   additional_rate_limits?: CodexAdditionalRateLimit[]
+  consumer_resets?: {
+    primary?: { remaining?: number; expires_at?: number }
+    secondary?: { remaining?: number; expires_at?: number }
+  }
 }
 
 export type CodexUsageDialogData = {
@@ -541,6 +548,85 @@ export function CodexUsageDialog({
               </div>
             )}
           </div>
+
+          {/* Consumer Resets */}
+          {payload?.consumer_resets && (
+            <div className='rounded-lg border p-4'>
+              <div className='mb-3 text-sm font-semibold'>{t('Consumer Resets')}</div>
+              <div className='grid gap-3 sm:grid-cols-2'>
+                <div className='flex items-center justify-between rounded-md border p-3'>
+                  <div>
+                    <div className='text-xs text-muted-foreground'>{t('5h Resets Remaining')}</div>
+                    <div className='text-lg font-bold'>
+                      {payload.consumer_resets.primary?.remaining ?? 0}
+                    </div>
+                    {payload.consumer_resets.primary?.expires_at ? (
+                      <div className='text-xs text-muted-foreground'>
+                        {t('Expires')}: {dayjs.unix(payload.consumer_resets.primary.expires_at).format('YYYY-MM-DD HH:mm')}
+                      </div>
+                    ) : null}
+                  </div>
+                  {channelId && (payload.consumer_resets.primary?.remaining ?? 0) > 0 && (
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={async () => {
+                        try {
+                          const res = await consumeCodexReset(channelId, '5h')
+                          if (res.success) {
+                            toast.success(res.message || t('Reset consumed'))
+                            onRefresh?.()
+                          } else {
+                            toast.error(res.message || t('Failed to consume reset'))
+                          }
+                        } catch {
+                          toast.error(t('Failed to consume reset'))
+                        }
+                      }}
+                    >
+                      <RotateCcw className='mr-1 h-3 w-3' />
+                      {t('Consume Reset')}
+                    </Button>
+                  )}
+                </div>
+                <div className='flex items-center justify-between rounded-md border p-3'>
+                  <div>
+                    <div className='text-xs text-muted-foreground'>{t('7d Resets Remaining')}</div>
+                    <div className='text-lg font-bold'>
+                      {payload.consumer_resets.secondary?.remaining ?? 0}
+                    </div>
+                    {payload.consumer_resets.secondary?.expires_at ? (
+                      <div className='text-xs text-muted-foreground'>
+                        {t('Expires')}: {dayjs.unix(payload.consumer_resets.secondary.expires_at).format('YYYY-MM-DD HH:mm')}
+                      </div>
+                    ) : null}
+                  </div>
+                  {channelId && (payload.consumer_resets.secondary?.remaining ?? 0) > 0 && (
+                    <Button
+                      variant='outline'
+                      size='sm'
+                      onClick={async () => {
+                        try {
+                          const res = await consumeCodexReset(channelId, '7d')
+                          if (res.success) {
+                            toast.success(res.message || t('Reset consumed'))
+                            onRefresh?.()
+                          } else {
+                            toast.error(res.message || t('Failed to consume reset'))
+                          }
+                        } catch {
+                          toast.error(t('Failed to consume reset'))
+                        }
+                      }}
+                    >
+                      <RotateCcw className='mr-1 h-3 w-3' />
+                      {t('Consume Reset')}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Raw JSON collapsible */}
           <div className='rounded-lg border'>
